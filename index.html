@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Previous HTML structure remains the same -->
+        <!-- Page 1: Initial Form -->
+        <div class="page active" id="page1">
+            <h1>GPA Calculator</h1>
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="university">University:</label>
+                <input type="text" id="university" required>
+            </div>
+            
+            <div class="options">
+                <div class="option-card" onclick="showManualEntry()">
+                    <h3>Manual Entry</h3>
+                    <p>Add courses manually</p>
+                </div>
+                <div class="option-card" onclick="showFileUpload()">
+                    <h3>Upload CSV</h3>
+                    <p>Upload existing course data</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 2: Manual Entry -->
+        <div class="page" id="page2">
+            <h1>Add Courses</h1>
+            <div id="courses-list" class="courses-list">
+                <div class="course-entry">
+                    <input type="text" placeholder="Course Name" class="course-name">
+                    <input type="number" placeholder="Credits" min="1" max="6" class="credits">
+                    <select class="grade">
+                        <option value="O">O</option>
+                        <option value="A+">A+</option>
+                        <option value="A">A</option>
+                        <option value="B+">B+</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="P">P</option>
+                        <option value="F">F</option>
+                    </select>
+                    <button class="remove-course" onclick="removeCourse(this)">Remove</button>
+                </div>
+            </div>
+            <button onclick="addCourse()">Add Another Course</button>
+            <button onclick="calculateGPA()">Calculate GPA</button>
+            <button onclick="downloadCSV()">Download as CSV</button>
+        </div>
+
+        <!-- Page 3: File Upload -->
+        <div class="page" id="page3">
+            <h1>Upload Course Data</h1>
+            <div class="form-group">
+                <label for="csvFile">Upload CSV file:</label>
+                <input type="file" id="csvFile" accept=".csv">
+            </div>
+            <button onclick="processCSV()">Calculate GPA</button>
+        </div>
+
+        <!-- Page 4: Results -->
+        <div class="page" id="page4">
+            <h1>Your GPA Results</h1>
+            <div class="result">
+                <h2>Overall GPA</h2>
+                <div class="gpa-value" id="gpaResult"></div>
+            </div>
+            <div id="courseTable"></div>
+            <button onclick="downloadPDF()">Download PDF Report</button>
+            <button onclick="resetCalculator()">Calculate Another GPA</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
