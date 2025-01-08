@@ -227,31 +227,70 @@ function downloadPDF() {
     // Set margins and dimensions
     const leftMargin = 30;
     const rightMargin = 30;
-    const pageWidth = 210; // A4 width in mm
+    const pageWidth = 210;
     const tableWidth = pageWidth - (leftMargin + rightMargin);
+    const rightBorderX = leftMargin + tableWidth;  // Moved this declaration up
     const lineHeight = 5;
     const cellPadding = 3;
     
-    // Add header
-    doc.setFontSize(16);
+    // Colors
+    const colors = {
+        primary: [41, 128, 185],    // Professional blue
+        secondary: [52, 73, 94],    // Dark grayish blue
+        accent: [22, 160, 133],     // Emerald green
+        text: [44, 62, 80]          // Dark gray
+    };
+    
+    // Helper function to set RGB color
+    const setColor = (colorArr) => {
+        doc.setTextColor(colorArr[0], colorArr[1], colorArr[2]);
+    };
+    
+    // Main Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    setColor(colors.primary);
     doc.text('GPA Calculation Report', 105, 20, { align: 'center' });
     
-    // Add student info
+    // Add decorative line under main header
+    doc.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.setLineWidth(0.5);
+    doc.line(leftMargin, 25, rightBorderX, 25);
+    
+    // Student Info Section
     doc.setFontSize(12);
-    doc.text(`Name: ${studentName}`, leftMargin, 40);
-    doc.text(`University: ${university}`, leftMargin, 50);
-    doc.text(`Overall GPA: ${document.getElementById('gpaResult').textContent}`, leftMargin, 60);
-
-    // Add course table
-    let yPosition = 80;
-    doc.text('Course Details:', leftMargin, yPosition);
+    doc.setFont('helvetica', 'bold');
+    setColor(colors.secondary);
+    
+    let yPosition = 40;
+    // Labels in bold
+    doc.text('Name:', leftMargin, yPosition);
+    doc.text('University:', leftMargin, yPosition + 10);
+    doc.text('Overall GPA:', leftMargin, yPosition + 20);
+    
+    // Values in regular font
+    doc.setFont('helvetica', 'normal');
+    setColor(colors.text);
+    doc.text(studentName, leftMargin + 35, yPosition);
+    doc.text(university, leftMargin + 35, yPosition + 10);
+    
+    // GPA value in accent color
+    setColor(colors.accent);
+    doc.setFont('helvetica', 'bold');
+    doc.text(document.getElementById('gpaResult').textContent, leftMargin + 35, yPosition + 20);
+    
+    // Course Details Section
+    yPosition = 80;
+    doc.setFont('helvetica', 'bold');
+    setColor(colors.primary);
+    doc.setFontSize(14);
+    doc.text('Course Details', leftMargin, yPosition);
     yPosition += 10;
-
-    // Define table structure
+    
     const tableStartY = yPosition;
     const textPadding = 5;
     
-    // Calculate column widths
+    // Column definitions
     const columns = {
         courseName: { 
             x: leftMargin, 
@@ -270,62 +309,89 @@ function downloadPDF() {
         }
     };
 
-    const rightBorderX = leftMargin + tableWidth;
-
-    // Draw header
+    // Table Header styling
+    doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.rect(leftMargin, yPosition, tableWidth, lineHeight + (cellPadding * 2), 'F');
+    
+    doc.setTextColor(255, 255, 255); // White text for header
     doc.setFontSize(11);
-    doc.setLineWidth(0.2);
+    doc.setFont('helvetica', 'bold');
     
     // Header row
     let headerHeight = lineHeight + (cellPadding * 2);
-    doc.line(leftMargin, yPosition, rightBorderX, yPosition); // Top line
     const headerY = yPosition + cellPadding + (headerHeight - cellPadding * 2) / 2;
     doc.text('Course Name', columns.courseName.textX, headerY);
     doc.text('Credits', columns.credits.textX, headerY);
     doc.text('Grade', columns.grade.textX, headerY);
     yPosition += headerHeight;
-    doc.line(leftMargin, yPosition, rightBorderX, yPosition);
-
-    // Vertical lines for header
-    doc.line(leftMargin, tableStartY, leftMargin, yPosition);
-    doc.line(columns.credits.x, tableStartY, columns.credits.x, yPosition);
-    doc.line(columns.grade.x, tableStartY, columns.grade.x, yPosition);
-    doc.line(rightBorderX, tableStartY, rightBorderX, yPosition);
-
-    // Table content
+    
+    // Table grid styling
+    doc.setDrawColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+    doc.setLineWidth(0.2);
+    
+    // Content rows
+    doc.setFont('helvetica', 'normal');
+    setColor(colors.text);
     doc.setFontSize(9);
-    courseData.forEach((course) => {
+    
+    courseData.forEach((course, index) => {
         if (yPosition > 270) {
             doc.addPage();
             yPosition = 20;
         }
 
-        // Calculate cell height based on wrapped text
+        // Alternating row background
+        // if (index % 2 === 0) {
+        //     doc.setFillColor(247, 247, 247); // Light gray
+        //     doc.rect(leftMargin, yPosition - headerHeight, tableWidth, headerHeight, 'F');
+        // }
+
         const courseNameLines = doc.splitTextToSize(course.name, columns.courseName.width - (textPadding * 2));
         const cellHeight = Math.max(
             courseNameLines.length * lineHeight + (cellPadding * 2),
             lineHeight + (cellPadding * 2)
         );
 
-        // Calculate vertical center position for text
         const textY = yPosition + cellPadding + (cellHeight - cellPadding * 2) / 2;
-
-        // Draw cell content
+        
+        // Course name in regular text
         doc.text(courseNameLines, columns.courseName.textX, textY);
+        
+        // Credits in regular text
         doc.text(course.credits.toString(), columns.credits.textX, textY);
+        
+        // Grade in bold and colored based on performance
+        doc.setFont('helvetica', 'bold');
+        if (course.grade === 'A+' || course.grade === 'O') {
+            setColor(colors.accent);
+        } else if (course.grade === 'F') {
+            setColor([192, 57, 43]); // Red for failing grade
+        } else {
+            setColor(colors.text);
+        }
         doc.text(course.grade.toString(), columns.grade.textX, textY);
+        
+        // Reset to regular styling
+        doc.setFont('helvetica', 'normal');
+        setColor(colors.text);
 
         // Draw cell borders
         yPosition += cellHeight;
-        doc.line(leftMargin, yPosition, rightBorderX, yPosition); // Bottom line
-
-        // Vertical lines
-        const cellStartY = yPosition - cellHeight;
-        doc.line(leftMargin, cellStartY, leftMargin, yPosition);
-        doc.line(columns.credits.x, cellStartY, columns.credits.x, yPosition);
-        doc.line(columns.grade.x, cellStartY, columns.grade.x, yPosition);
-        doc.line(rightBorderX, cellStartY, rightBorderX, yPosition);
+        
+        // Draw grid lines
+        doc.line(leftMargin, yPosition, rightBorderX, yPosition);
+        doc.line(leftMargin, yPosition - cellHeight, leftMargin, yPosition);
+        doc.line(columns.credits.x, yPosition - cellHeight, columns.credits.x, yPosition);
+        doc.line(columns.grade.x, yPosition - cellHeight, columns.grade.x, yPosition);
+        doc.line(rightBorderX, yPosition - cellHeight, rightBorderX, yPosition);
     });
+
+    // Add footer
+    const footerY = yPosition + 20;
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
+    setColor(colors.secondary);
+    doc.text('Generated on ' + new Date().toLocaleDateString(), 105, footerY, { align: 'center' });
 
     doc.save(`${studentName}_gpa_report.pdf`);
 }
