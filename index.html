@@ -42,7 +42,7 @@
                 <div class="course-entry">
                     <input type="text" placeholder="Course Name" class="course-name">
                     <input type="number" placeholder="Credits" min="1" max="6" class="credits">
-                    <select class="grade">
+                    <select class="grade" id="grade">
                         <option value="O">O</option>
                         <option value="A+">A+</option>
                         <option value="A">A</option>
@@ -68,6 +68,7 @@
                 <input type="file" id="csvFile" accept=".csv">
             </div>
             <button onclick="processCSV()">Calculate GPA</button>
+            <button onclick="retrieveAndAddNewCoursesToCSV()">Add additional courses</button>
         </div>
 
         <!-- Page 4: Results -->

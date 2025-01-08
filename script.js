@@ -51,7 +51,7 @@ function addCourse() {
     newCourse.className = 'course-entry';
     newCourse.innerHTML = `
         <input type="text" placeholder="Course Name" class="course-name">
-        <input type="number" placeholder="Credits" min="1" max="6" class="credits">
+        <input type="number" placeholder="Credits" min="1" max="15" class="credits">
         <select class="grade">
             <option value="O">O</option>
             <option value="A+">A+</option>
@@ -65,6 +65,46 @@ function addCourse() {
         <button class="remove-course" onclick="removeCourse(this)">Remove</button>
     `;
     coursesList.appendChild(newCourse);
+}
+
+function retrieveAndAddNewCoursesToCSV() {
+    const file = document.getElementById('csvFile').files[0];
+    if (!file) {
+        alert('Please select a CSV file');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const rows = text.split('\n');
+
+        // Skip header row
+        for (let i = 1; i < rows.length; i++) {
+            const [name, credits, grade] = rows[i].split(',').map(item => item.trim());
+            if (name && credits && grade) {
+                const numCredits = parseFloat(credits);
+                if (!isNaN(numCredits) && gradePoints[grade] !== undefined) {
+                    showPage('page2');
+                    const coursesList = document.getElementById('courses-list');
+                    const newCourse = document.createElement('div');
+                    newCourse.className = 'course-entry';
+                    newCourse.innerHTML = `
+                        <input type="text" value="${name}" class="course-name">
+                        <input type="number" value="${numCredits}" min="1" max="15" class="credits">
+                        <select class="grade">
+                            ${Object.keys(gradePoints).map(g => 
+                                `<option value="${g}" ${g === grade ? 'selected' : ''}>${g}</option>`
+                            ).join('')}
+                        </select>
+                        <button class="remove-course" onclick="removeCourse(this)">Remove</button>
+                    `;
+                    coursesList.appendChild(newCourse);
+                }
+            }
+        }
+    };
+    reader.readAsText(file);
 }
 
 function removeCourse(button) {
@@ -173,7 +213,9 @@ function downloadCSV() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('href', url);
-    a.setAttribute('download', 'courses.csv');
+    // Using the studentName variable that was captured at the beginning
+    const filename = studentName ? `${studentName}.csv` : 'courses.csv';
+    a.setAttribute('download', filename);
     a.click();
     window.URL.revokeObjectURL(url);
 }
@@ -182,40 +224,110 @@ function downloadPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
+    // Set margins and dimensions
+    const leftMargin = 30;
+    const rightMargin = 30;
+    const pageWidth = 210; // A4 width in mm
+    const tableWidth = pageWidth - (leftMargin + rightMargin);
+    const lineHeight = 5;
+    const cellPadding = 3;
+    
     // Add header
     doc.setFontSize(16);
     doc.text('GPA Calculation Report', 105, 20, { align: 'center' });
     
     // Add student info
     doc.setFontSize(12);
-    doc.text(`Name: ${studentName}`, 20, 40);
-    doc.text(`University: ${university}`, 20, 50);
-    doc.text(`Overall GPA: ${document.getElementById('gpaResult').textContent}`, 20, 60);
+    doc.text(`Name: ${studentName}`, leftMargin, 40);
+    doc.text(`University: ${university}`, leftMargin, 50);
+    doc.text(`Overall GPA: ${document.getElementById('gpaResult').textContent}`, leftMargin, 60);
 
     // Add course table
     let yPosition = 80;
-    doc.text('Course Details:', 20, yPosition);
+    doc.text('Course Details:', leftMargin, yPosition);
     yPosition += 10;
 
-    // Table headers
-    doc.text('Course Name', 20, yPosition);
-    doc.text('Credits', 120, yPosition);
-    doc.text('Grade', 160, yPosition);
-    yPosition += 10;
+    // Define table structure
+    const tableStartY = yPosition;
+    const textPadding = 5;
+    
+    // Calculate column widths
+    const columns = {
+        courseName: { 
+            x: leftMargin, 
+            width: tableWidth * 0.6,
+            textX: leftMargin + textPadding 
+        },
+        credits: { 
+            x: leftMargin + (tableWidth * 0.6), 
+            width: tableWidth * 0.2,
+            textX: leftMargin + (tableWidth * 0.6) + textPadding
+        },
+        grade: { 
+            x: leftMargin + (tableWidth * 0.8), 
+            width: tableWidth * 0.2,
+            textX: leftMargin + (tableWidth * 0.8) + textPadding
+        }
+    };
+
+    const rightBorderX = leftMargin + tableWidth;
+
+    // Draw header
+    doc.setFontSize(11);
+    doc.setLineWidth(0.2);
+    
+    // Header row
+    let headerHeight = lineHeight + (cellPadding * 2);
+    doc.line(leftMargin, yPosition, rightBorderX, yPosition); // Top line
+    const headerY = yPosition + cellPadding + (headerHeight - cellPadding * 2) / 2;
+    doc.text('Course Name', columns.courseName.textX, headerY);
+    doc.text('Credits', columns.credits.textX, headerY);
+    doc.text('Grade', columns.grade.textX, headerY);
+    yPosition += headerHeight;
+    doc.line(leftMargin, yPosition, rightBorderX, yPosition);
+
+    // Vertical lines for header
+    doc.line(leftMargin, tableStartY, leftMargin, yPosition);
+    doc.line(columns.credits.x, tableStartY, columns.credits.x, yPosition);
+    doc.line(columns.grade.x, tableStartY, columns.grade.x, yPosition);
+    doc.line(rightBorderX, tableStartY, rightBorderX, yPosition);
 
     // Table content
-    courseData.forEach(course => {
+    doc.setFontSize(9);
+    courseData.forEach((course) => {
         if (yPosition > 270) {
             doc.addPage();
             yPosition = 20;
         }
-        doc.text(course.name.substring(0, 40), 20, yPosition); // Limit course name length
-        doc.text(course.credits.toString(), 120, yPosition);
-        doc.text(course.grade.toString(), 160, yPosition);
-        yPosition += 10;
+
+        // Calculate cell height based on wrapped text
+        const courseNameLines = doc.splitTextToSize(course.name, columns.courseName.width - (textPadding * 2));
+        const cellHeight = Math.max(
+            courseNameLines.length * lineHeight + (cellPadding * 2),
+            lineHeight + (cellPadding * 2)
+        );
+
+        // Calculate vertical center position for text
+        const textY = yPosition + cellPadding + (cellHeight - cellPadding * 2) / 2;
+
+        // Draw cell content
+        doc.text(courseNameLines, columns.courseName.textX, textY);
+        doc.text(course.credits.toString(), columns.credits.textX, textY);
+        doc.text(course.grade.toString(), columns.grade.textX, textY);
+
+        // Draw cell borders
+        yPosition += cellHeight;
+        doc.line(leftMargin, yPosition, rightBorderX, yPosition); // Bottom line
+
+        // Vertical lines
+        const cellStartY = yPosition - cellHeight;
+        doc.line(leftMargin, cellStartY, leftMargin, yPosition);
+        doc.line(columns.credits.x, cellStartY, columns.credits.x, yPosition);
+        doc.line(columns.grade.x, cellStartY, columns.grade.x, yPosition);
+        doc.line(rightBorderX, cellStartY, rightBorderX, yPosition);
     });
 
-    doc.save('gpa_report.pdf');
+    doc.save(`${studentName}_gpa_report.pdf`);
 }
 
 function resetCalculator() {
@@ -226,7 +338,7 @@ function resetCalculator() {
     document.getElementById('courses-list').innerHTML = `
         <div class="course-entry">
             <input type="text" placeholder="Course Name" class="course-name">
-            <input type="number" placeholder="Credits" min="1" max="6" class="credits">
+            <input type="number" placeholder="Credits" min="1" max="15" class="credits">
             <select class="grade">
                 <option value="O">O</option>
                 <option value="A+">A+</option>
