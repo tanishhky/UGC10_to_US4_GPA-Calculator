@@ -2,6 +2,7 @@
 
 A simple and interactive web-based GPA Calculator that allows users to calculate their GPA either by entering course details manually or by uploading an existing CSV file containing course data.
 
+**To avoid hassles, visit the website : https://tanishhky.github.io/UGC10_to_US4_GPA-Calculator/**
 ## Features
 
 - **Manual Course Entry**: Add courses, credits, and grades to calculate GPA.
