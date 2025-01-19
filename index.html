@@ -6,9 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPA Calculator</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Set theme color to white -->
+    <meta name="theme-color" content="#FFFFFF">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+
 </head>
 
-<body>
+<body background="assets/images/Gemini_Generated_Image_97xdge97xdge97xd.jpg">
+    <div class="header">
+        <div class="logo">
+            <img src="assets/images/nu.png" alt="GPA Calculator" id="numora_logo">
+        </div>
+        <!-- <div id="Numora">numora.io</div> -->
+    </div>
+
+    <!-- <h1>GPA Calculator</h1> -->
     <div class="container">
         <!-- Previous HTML structure remains the same -->
         <!-- Page 1: Initial Form -->
@@ -40,8 +54,9 @@
             <h1>Add Courses</h1>
             <div id="courses-list" class="courses-list">
                 <div class="course-entry">
+                    <!-- <input type="number" placeholder="Semester" min="1" class="semester"> -->
                     <input type="text" placeholder="Course Name" class="course-name">
-                    <input type="number" placeholder="Credits" min="1" max="6" class="credits">
+                    <input type="number" placeholder="Credits" min="1" max="15" class="credits">
                     <select class="grade" id="grade">
                         <option value="O">O</option>
                         <option value="A+">A+</option>
@@ -55,6 +70,8 @@
                     <button class="remove-course" onclick="removeCourse(this)">Remove</button>
                 </div>
             </div>
+            <!-- Add button to partition semesters in manual entry page -->
+            <button onclick="addSemesterPartition()">Add Semester Partition</button>
             <button onclick="addCourse()">Add Another Course</button>
             <button onclick="calculateGPA()">Calculate GPA</button>
             <button onclick="downloadCSV()">Download as CSV</button>
@@ -83,6 +100,19 @@
             <button onclick="resetCalculator()">Calculate Another GPA</button>
         </div>
     </div>
+    <footer class="footer">
+        <div id="gradient">
+        </div>
+        <div class="footer-content" id="actual_footer">
+            <p>&copy; 2025 numora.io. All rights reserved.</p>
+            <p>
+                <a href="https://twitter.com/numora" target="_blank">Twitter</a> |
+                <a href="https://linkedin.com/company/numora" target="_blank">LinkedIn</a> |
+                <a href="https://github.com/numora" target="_blank">GitHub</a>
+            </p>
+        </div>
+    </footer>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="script.js"></script>
